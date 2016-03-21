@@ -1,4 +1,5 @@
-;(function($){
+;(function($, window, undefined){
+  var $window = $(window);
 
   $.fn.priceRange = function(config){
     var _self = $(this);
@@ -18,6 +19,46 @@
           });
         });
       },
+      listClick : function() {
+        var $this = $(this);
+        
+        if(method.isActive($this)) return;
+
+        $this
+          .addClass('active')
+            .siblings().removeClass('active');
+
+        var isMinList = method.isMinList($this);
+
+        method.setInputVal(isMinList,$this.data('val'));
+
+        if(isMinList)
+          method.disableMaxItems();
+      },
+      isActive : function(li) {
+        var con = method.isMinList(li);
+        obj[(con?'min':'max')+'Input'].val(null);
+
+        method.disableMaxItems();
+        if(li.hasClass('active')) {
+          li.removeClass('active');
+          return true;
+        }
+        return false;
+      },
+      isMinList : function(li) {
+        return li.closest('ul').hasClass('min-list');
+      },
+      setInputVal : function(list, v) {
+        obj[(list?'min':'max')+'Input'].val(v);
+      },
+      disableMaxItems: function() {
+        obj.maxList.children().each(function(){
+          var $this = $(this),
+              con = +$this.data('val') < +obj.minInput.val();
+          $this[(con?'add':'remove')+'Class']('disabled');
+        });
+      }
     };
 
     _self
@@ -43,16 +84,11 @@
     var obj = {
       minList : _self.find('.min-list'),
       maxList : _self.find('.max-list'),
-      maxInput : _self.find('.min-input'),
-      minInput : _self.find('.max-input')
+      minInput : _self.find('.min-input'),
+      maxInput : _self.find('.max-input')
     };
 
-    _self.on('click','.min-list li',function(){
-      alert('x');
-    });
-    _self.on('click','.max-list li',function(){
-      alert('x');
-    });
+    _self.on('click','.min-list li, .max-list li', method.listClick);
     _self.on('keypress','.max-input',function(){
       alert('x');
     });
@@ -64,4 +100,4 @@
 
   }
 
-})(jQuery);
+})(jQuery,window);

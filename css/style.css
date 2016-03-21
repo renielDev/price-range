@@ -1,0 +1,9 @@
+.price--range li.active {
+  background-color: red ;
+}
+.price--range li:hover {
+  background-color: gray ;
+}
+.price--range li.disabled {
+  background-color: green;
+}
