@@ -11,6 +11,8 @@
       'listClass' : 'list-unstyled',
     };
 
+    $.extend(defaults, config);
+
     var method = {
       renderList : function() {
         $.each(['minList','maxList'], function(k,v) {
@@ -19,47 +21,70 @@
           });
         });
       },
-      listClick : function() {
-        var $this = $(this);
-        
-        if(method.isActive($this)) return;
-
-        $this
-          .addClass('active')
-            .siblings().removeClass('active');
-
-        var isMinList = method.isMinList($this);
-
-        method.setInputVal(isMinList,$this.data('val'));
-
-        if(isMinList)
-          method.disableMaxItems();
-      },
+      // check if active list: true/false
       isActive : function(li) {
-        var con = method.isMinList(li);
-        obj[(con?'min':'max')+'Input'].val(null);
-
-        method.disableMaxItems();
-        if(li.hasClass('active')) {
-          li.removeClass('active');
-          return true;
-        }
-        return false;
+        return li.hasClass('active');
       },
+      // return container min-list: true/false
       isMinList : function(li) {
         return li.closest('ul').hasClass('min-list');
       },
       setInputVal : function(list, v) {
         obj[(list?'min':'max')+'Input'].val(v);
       },
+      // disable max items
       disableMaxItems: function() {
         obj.maxList.children().each(function(){
-          var $this = $(this),
-              con = +$this.data('val') < +obj.minInput.val();
-          $this[(con?'add':'remove')+'Class']('disabled');
+          var _this = $(this),
+              con = +_this.data('val') <= +obj.minInput.val();
+          _this[(con?'add':'remove')+'Class']('disabled');
         });
       }
     };
+    var list = {
+      click : function() {
+        var _this = $(this);
+
+        // check if active or disabled
+        if(_this.hasClass('disabled')) return;
+
+        var con = method.isMinList(_this);
+        var listActive = method.isActive(_this);
+
+        if(!listActive) {
+          method.setInputVal(con, _this.data('val'));
+          _this
+            .addClass('active')
+            .siblings().removeClass('active');
+        } else {
+          _this.removeClass('active');
+          method.setInputVal(con, null);
+        }
+
+        if(con) method.disableMaxItems();
+      },
+      setActive : function(list, inputVal) {
+        list.children('li')
+          .removeClass('active')
+            .each(function(){
+              var _this = $(this);
+              if( +_this.data('val') === +inputVal ) _this.addClass('active');
+            });
+      }
+    }
+    var input = {
+      keyup: function() {
+        var _this = $(this);
+        if(input.isMinListSibling(_this)) {
+          list.setActive(obj.minList, _this.val());
+          method.disableMaxItems();
+        }
+      },
+      isMinListSibling: function(input) {
+        return input.siblings('ul').hasClass('min-list');
+      }
+
+    }
 
     _self
       .addClass('price--range')
@@ -88,16 +113,11 @@
       maxInput : _self.find('.max-input')
     };
 
-    _self.on('click','.min-list li, .max-list li', method.listClick);
-    _self.on('keypress','.max-input',function(){
-      alert('x');
-    });
-    _self.on('keypress','.min-input',function(){
-      alert('x');
-    });
+    _self.on('click','.min-list li, .max-list li', list.click);
+    _self.on('keyup','.max-input, .min-input',input.keyup);
 
+    // call to render list
     method.renderList();
-
   }
 
 })(jQuery,window);
